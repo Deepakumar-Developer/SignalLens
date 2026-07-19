@@ -1,0 +1,5 @@
+package com.deepakumardeveloper.signallens
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

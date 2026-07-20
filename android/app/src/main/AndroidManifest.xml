@@ -1,8 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+<uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-feature android:name="android.hardware.camera.ar" />
+
+<!-- Android 13+ -->
+<uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"/>
     <application
         android:label="signallens"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -20,6 +30,7 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <meta-data android:name="com.google.ar.core" android:value="required" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -30,6 +41,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

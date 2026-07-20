@@ -19,8 +19,19 @@ pluginManagement {
 
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
-    id("com.android.application") version "9.0.1" apply false
-    id("org.jetbrains.kotlin.android") version "2.3.20" apply false
+    id("com.android.application") version "8.11.1" apply false
+    id("org.jetbrains.kotlin.android") version "2.2.20" apply false
 }
 
 include(":app")
+
+gradle.beforeProject {
+    if (this.name == "arcore_flutter_plugin") {
+        this.afterEvaluate {
+            val android = this.extensions.findByName("android") as? com.android.build.gradle.BaseExtension
+            if (android != null && android.namespace == null) {
+                android.namespace = "com.difrancescogianmarco.arcore_flutter_plugin"
+            }
+        }
+    }
+}

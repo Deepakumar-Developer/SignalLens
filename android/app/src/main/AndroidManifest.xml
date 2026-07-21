@@ -8,7 +8,7 @@
 <!-- Android 13+ -->
 <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"/>
     <application
-        android:label="signallens"
+        android:label="SignalLens"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"

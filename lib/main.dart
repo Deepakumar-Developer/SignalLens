@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:signallens/pages/sl_ar_tracker.dart';
-import 'package:signallens/pages/sl_home_page.dart';
+import 'package:signallens/functions/app_function.dart';
+import 'package:signallens/pages/sl_main_page.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
+  customStatusBar(Colors.white, Colors.white, Brightness.dark, Brightness.dark);
   runApp(const MyApp());
 }
 
@@ -18,16 +18,16 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'SignalLens',
       theme: ThemeData(
-        colorScheme: .fromSeed(
+        colorScheme: ColorScheme.fromSeed(
           seedColor: Color(0xff5996FF),
-          surface: Color(0xffFFFCE1),
+          surface: Color(0xffffffff),
           primary: Color(0xff1B4EF5),
           secondary: Color(0xff3874FF),
           tertiary: Color(0xff080616),
         ),
       ),
 
-      home: ARScreen(),
+      home: const SlMainPage(),
     );
   }
 }

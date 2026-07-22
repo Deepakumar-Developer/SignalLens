@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:signallens/functions/app_function.dart';
 import 'package:signallens/widgets/sl_button.dart';
-import 'package:signallens/widgets/sl_input.dart';
 import 'package:signallens/widgets/sl_text.dart';
 import 'package:signallens/widgets/sl_loader.dart';
+import 'package:signallens/widgets/sl_wifi_signal.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:wifi_scan/wifi_scan.dart';
 
 class SlHomePage extends StatefulWidget {
   const SlHomePage({super.key});
@@ -16,6 +20,11 @@ class SlHomePage extends StatefulWidget {
 class _SlHomePageState extends State<SlHomePage> {
   bool _isWifiOn = false, isLoading = false;
   List<Map<String, dynamic>> _wifiList = [];
+  String _ssid = ':(', _rssi = '', _security = '';
+
+  // Stream Subscriptions
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
+  StreamSubscription<List<WiFiAccessPoint>>? _wifiScanSubscription;
 
   Future<bool> requestPermissions() async {
     var location = await Permission.location.request();
@@ -46,6 +55,28 @@ class _SlHomePageState extends State<SlHomePage> {
     setState(() {
       _isWifiOn = enabled;
     });
+    if (!enabled) {
+      setState(() {
+        _ssid = ':(';
+        _rssi = '-100';
+        _security = '';
+      });
+      return;
+    }
+    String ssid = await ConnectedWifiService.getConnectedSSID() ?? '';
+    final wifiList = await scanWifi();
+    setState(() {
+      _ssid = ssid;
+      if (_ssid.isNotEmpty) {
+        for (var wifi in wifiList) {
+          if (wifi['ssid'] == _ssid) {
+            _security = wifi['security'] ?? 'Unknown';
+            _rssi = '${wifi['rssi'] ?? 'Unknown'}';
+            break;
+          }
+        }
+      }
+    });
   }
 
   Future<void> _toggleWifi(bool value) async {
@@ -69,6 +100,24 @@ class _SlHomePageState extends State<SlHomePage> {
     super.initState();
     appPermission();
     _checkStatus();
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) {
+      _checkStatus();
+    });
+
+    _wifiScanSubscription = WiFiScan.instance.onScannedResultsAvailable.listen((
+      results,
+    ) {
+      _checkStatus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    _wifiScanSubscription?.cancel();
+    super.dispose();
   }
 
   @override
@@ -86,13 +135,12 @@ class _SlHomePageState extends State<SlHomePage> {
                   vertical: 24.0,
                 ),
                 child: Column(
-                  spacing: 24,
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
+                    Row(
                       spacing: 12,
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Image.asset(
@@ -100,89 +148,205 @@ class _SlHomePageState extends State<SlHomePage> {
                           width: 150,
                           height: 150,
                         ),
-                        SlTitleText("SignalLens", fontSize: 30),
-                        SlSubtitleText(
-                          "AR-Based Wireless Access Point Localization and Signal Visualization System",
-                          fontSize: 12,
-                          textAlign: TextAlign.center,
-                          color: Theme.of(context).colorScheme.tertiary,
+                        SizedBox(
+                          height: 150,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              SlTitleText("SignalLens", fontSize: 30),
+                              SizedBox(
+                                width: getScreenWidth(context) - (150 + 48),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    _isWifiOn
+                                        ? SlIconButton(
+                                            icon: Icons.wifi_rounded,
+                                            onPressed: () {
+                                              _toggleWifi(false);
+                                            },
+                                            tooltip: "Turn Off Wi-Fi",
+                                          )
+                                        : SlIconButton(
+                                            icon: Icons.wifi_off_rounded,
+                                            onPressed: () {
+                                              _toggleWifi(true);
+                                            },
+                                            tooltip: "Turn On Wi-Fi",
+                                            iconColor: Theme.of(
+                                              context,
+                                            ).colorScheme.tertiary,
+                                          ),
+                                    SlIconButton(
+                                      icon: Icons.replay_rounded,
+                                      onPressed: () {
+                                        if (_isWifiOn) {
+                                          appPermission();
+                                        } else {
+                                          _openWifi(true);
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    _isWifiOn
-                        ? SlIconButton(
-                            icon: Icons.wifi_rounded,
-                            onPressed: () {
-                              _toggleWifi(false);
-                            },
-                            tooltip: "Turn Off Wi-Fi",
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            iconColor: Theme.of(context).colorScheme.surface,
-                          )
-                        : SlIconButton(
-                            icon: Icons.wifi_off_rounded,
-                            onPressed: () {
-                              _toggleWifi(true);
-                            },
-                            tooltip: "Turn On Wi-Fi",
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.surface,
-                            iconColor: Theme.of(context).colorScheme.tertiary,
-                          ),
-                    Expanded(
-                      child: Container(
+                    SizedBox(height: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: SizedBox(
                         width: getScreenWidth(context),
-                        padding: const EdgeInsets.all(24.0),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surface,
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 20,
-                              offset: const Offset(0, 10),
+                        height: getScreenHeight(context) - 260,
+                        child: Column(
+                          spacing: 12,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Visibility(
+                              visible: _isWifiOn,
+                              child: Container(
+                                width: getScreenWidth(context),
+                                padding: const EdgeInsets.all(28),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        SlWifiSignal(
+                                          signalStrength: _rssi,
+                                          iconSize: 32,
+                                        ),
+                                        SizedBox(width: 12),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            SlSubtitleText(
+                                              _ssid,
+                                              fontSize: 16,
+                                              textAlign: TextAlign.left,
+                                            ),
+                                            SlText(
+                                              _ssid != ':(' && _ssid.isNotEmpty
+                                                  ? "Connected"
+                                                  : "Not Connected",
+                                              fontSize: 12,
+                                              isMuted: true,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    Icon(
+                                      _security.contains('WPA') ||
+                                              _security.contains('WEP')
+                                          ? Icons.lock_rounded
+                                          : Icons.lock_open_rounded,
+                                      size: 24,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.tertiary,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SlSubtitleText(
+                              "Available Networks",
+                              fontSize: 16,
+                              textAlign: TextAlign.left,
+                            ),
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: SizedBox(
+                                  width: getScreenWidth(context),
+
+                                  child: ListView.builder(
+                                    itemCount: _wifiList.length,
+                                    itemBuilder: (context, index) {
+                                      final wifi = _wifiList[index];
+                                      return Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: SizedBox(
+                                          width: getScreenWidth(context),
+                                          child: Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  SlWifiSignal(
+                                                    signalStrength: wifi['rssi']
+                                                        .toString(),
+                                                    iconSize: 24,
+                                                  ),
+                                                  SizedBox(width: 12),
+                                                  Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      SlText(
+                                                        wifi['ssid'].toString(),
+                                                        fontSize: 14,
+                                                        textAlign:
+                                                            TextAlign.left,
+                                                      ),
+                                                      SlText(
+                                                        getSignalStatus(
+                                                          wifi['rssi'] ?? -100,
+                                                        ),
+                                                        fontSize: 10,
+                                                        isMuted: true,
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              Icon(
+                                                wifi['security'].contains(
+                                                          'WPA',
+                                                        ) ||
+                                                        wifi['security']
+                                                            .contains('WEP')
+                                                    ? Icons.lock_rounded
+                                                    : Icons.lock_open_rounded,
+                                                size: 18,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ),
                             ),
                           ],
-                          border: Border.all(
-                            color: Colors.grey.withOpacity(0.1),
-                            width: 1,
-                          ),
-                        ),
-                        child: ListView.builder(
-                          itemCount: _wifiList.length,
-                          itemBuilder: (context, index) {
-                            final wifi = _wifiList[index];
-                            return ListTile(
-                              title: SlText(wifi['ssid'] ?? 'Unknown SSID'),
-                              subtitle: SlText(
-                                'BSSID: ${wifi['bssid'] ?? 'Unknown BSSID'}\n'
-                                'RSSI: ${wifi['rssi'] ?? 'Unknown RSSI'}\n'
-                                'Standard: ${wifi['standard'] ?? 'Unknown Standard'}\n'
-                                'Security: ${wifi['security'] ?? 'Unknown Security'}\n'
-                                'Frequency: ${wifi['frequency'] ?? 'Unknown Frequency'} MHz',
-                                fontSize: 12,
-                                isMuted: true,
-                              ),
-                              isThreeLine: true,
-                            );
-                          },
                         ),
                       ),
-                    ),
-
-                    SlButton(
-                      label: 'Scan',
-                      icon: Icons.search,
-                      onPressed: () {
-                        if (_isWifiOn) {
-                          appPermission();
-                        } else {
-                          _openWifi(true);
-                        }
-                      },
                     ),
                   ],
                 ),
@@ -193,5 +357,13 @@ class _SlHomePageState extends State<SlHomePage> {
         ),
       ),
     );
+  }
+
+  String getSignalStatus(int dbm) {
+    if (dbm >= -30) return 'Excellent (Full signal)';
+    if (dbm >= -67) return 'Very Good';
+    if (dbm >= -70) return 'Okay';
+    if (dbm >= -80) return 'Not Good';
+    return 'Unusable (Weak signal)';
   }
 }

@@ -21,7 +21,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: Color(0xff5996FF),
           surface: Color(0xffffffff),
-          primary: Color(0xff1B4EF5),
+          primary: Color(0xff128C52),
           secondary: Color(0xff3874FF),
           tertiary: Color(0xff080616),
         ),

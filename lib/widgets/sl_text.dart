@@ -53,7 +53,7 @@ class SlSubtitleText extends StatelessWidget {
         fontSize: fontSize,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
-        color: color ?? Theme.of(context).colorScheme.secondary,
+        color: color ?? Theme.of(context).colorScheme.tertiary,
       ),
     );
   }

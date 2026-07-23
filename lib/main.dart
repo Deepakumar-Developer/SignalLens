@@ -19,10 +19,10 @@ class MyApp extends StatelessWidget {
       title: 'SignalLens',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Color(0xff5996FF),
+          seedColor: Color(0xff3fcb84),
           surface: Color(0xffffffff),
           primary: Color(0xff128C52),
-          secondary: Color(0xff3874FF),
+          secondary: Color(0xff3fcb84),
           tertiary: Color(0xff080616),
         ),
       ),

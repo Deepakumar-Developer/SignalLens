@@ -84,7 +84,7 @@ class ConnectedWifiService {
       }
 
       if (ssid == null || ssid == "<unknown ssid>") {
-        return "Not Connected";
+        return ":(";
       }
 
       return ssid;
@@ -95,7 +95,7 @@ class ConnectedWifiService {
   }
 
   static Future<String?> getConnectedBSSID() async {
-    return await WiFiForIoTPlugin.getBSSID(); //
+    return await WiFiForIoTPlugin.getBSSID();
   }
 
   static Future<bool> connectWifi(

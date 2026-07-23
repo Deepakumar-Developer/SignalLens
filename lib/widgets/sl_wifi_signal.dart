@@ -12,7 +12,6 @@ class SlWifiSignal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     int rssiValue = int.tryParse(signalStrength) ?? -100;
-    print(rssiValue);
     return Icon(
       getWifiIconByRssi(rssiValue),
       size: iconSize,

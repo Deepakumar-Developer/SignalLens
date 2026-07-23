@@ -88,8 +88,9 @@ class SlIconButton extends StatelessWidget {
     return Container(
       width: size,
       height: size,
+      alignment: Alignment.center,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(size / 4),
         color: backgroundColor ?? Theme.of(context).colorScheme.surface,
         border: Border.all(
           color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
@@ -98,7 +99,7 @@ class SlIconButton extends StatelessWidget {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(size / 4),
         clipBehavior: Clip.antiAlias,
         child: IconButton(
           tooltip: tooltip,

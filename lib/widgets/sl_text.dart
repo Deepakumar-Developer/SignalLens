@@ -49,6 +49,8 @@ class SlSubtitleText extends StatelessWidget {
     return Text(
       text,
       textAlign: textAlign,
+      softWrap: true,
+      overflow: TextOverflow.ellipsis,
       style: GoogleFonts.jetBrainsMono(
         fontSize: fontSize,
         fontWeight: FontWeight.w600,
@@ -65,6 +67,8 @@ class SlText extends StatelessWidget {
   final TextAlign? textAlign;
   final double fontSize;
   final bool isMuted;
+  final bool softWrap;
+  final TextOverflow overflow;
 
   const SlText(
     this.text, {
@@ -73,6 +77,8 @@ class SlText extends StatelessWidget {
     this.textAlign,
     this.fontSize = 14.0,
     this.isMuted = false,
+    this.softWrap = true,
+    this.overflow = TextOverflow.ellipsis,
   });
 
   @override
@@ -84,6 +90,8 @@ class SlText extends StatelessWidget {
     return Text(
       text,
       textAlign: textAlign,
+      softWrap: softWrap,
+      overflow: overflow,
       style: GoogleFonts.plusJakartaSans(
         fontSize: fontSize,
         fontWeight: FontWeight.normal,
